@@ -6,7 +6,11 @@ from jsonschema import validate
 import jsonpath
 import inspect, logging
 
+#Function that returns logger
 def customLogger(loglevel = logging.DEBUG):
+    """
+    Function to setup a logger object 
+    """
     loggerName = inspect.stack()[1][3]
     logger = logging.getLogger(loggerName)
     logger.setLevel(loglevel)
@@ -21,7 +25,11 @@ def customLogger(loglevel = logging.DEBUG):
     logger.addHandler(fileHandler)
     return logger
 
+#Defining a log function to log the Request and response
 def log(logger, response):
+    """
+    Function to log Request and Response 
+    """
     logger.info(f'Request URL = {response.request.url}')
     logger.info(f'Request headers = {response.request.headers}')
     logger.info(f'Response = {response.request.body}')
@@ -30,7 +38,7 @@ def log(logger, response):
     logger.info(f'Response = {response.text}')
 
 
-
+#Schema to define post Object
 postSchema = {
     "type" : "object",
     "properties" : {
@@ -51,14 +59,22 @@ postSchema = {
 
 }
 
+#Mandatory Headers info
 header = { 'Content-Type': 'application/json; charset=utf-8'}
 
 @pytest.fixture()
 def Setup():
+    """
+    Function to set the URL
+    """
+    
     url = 'https://jsonplaceholder.typicode.com/'
     return url
 
 def validateJson(jsonData):
+    """
+    Function to validate JSON Schema
+    """    
     try:
         validate(instance=jsonData, schema=postSchema)
     except jsonschema.exceptions.ValidationError as err:
@@ -67,6 +83,13 @@ def validateJson(jsonData):
     return True
 
 def test_001(Setup):
+    """
+    GET service
+    https://jsonplaceholder.typicode.com/posts
+    - verify that status code is 200
+    - verify the schema
+    - verify that API returns at least 100 records
+    """
     get_url = Setup+'posts'
 
     logger = customLogger()
@@ -84,6 +107,14 @@ def test_001(Setup):
 
 
 def test_002(Setup):
+    """
+    https://jsonplaceholder.typicode.com/posts/1
+    - verify that status code is 200
+    - verify the schema
+    - verify that API returns only one record
+    - verify that id in response matches the input (1)
+    """
+
     get_url = Setup + 'posts/1'
     logger = customLogger()
     response = requests.get(get_url, headers = header)
@@ -100,6 +131,11 @@ def test_002(Setup):
 
 
 def test_003(Setup):
+    """
+    https://jsonplaceholder.typicode.com/invalidposts
+    - verify that status code is 404
+    - log the complete request and response details for troubleshooting
+    """
 
     invalid_url = Setup + 'invalidposts'
     logger = customLogger()
@@ -112,6 +148,19 @@ def test_003(Setup):
 
 
 def test_004(Setup):
+    """
+    POST service
+    https://jsonplaceholder.typicode.com/posts
+    body = {
+    "title": "foo",
+    "body": "bar",
+    "userId": 1
+    }
+    send body as string
+    - verify that status code is 201
+    - verify the schema
+    - verify the record created
+    """
 
     body = {
         "title": "foo",
@@ -132,6 +181,12 @@ def test_004(Setup):
 
 
 def test_005(Setup):
+    """
+    DELETE service
+    https://jsonplaceholder.typicode.com/posts/1
+    - verify that status code is 200
+    - verify the response
+    """
 
     del_url = Setup+'posts/1'
 
